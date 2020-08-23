@@ -1,0 +1,35 @@
+﻿body {
+    height:100%;
+    width:100%;
+}
+#Button1{
+    background-color:aqua;
+ 
+}
+ul{
+    list-style-type:none;
+    margin:0;
+    padding:0;
+    overflow:hidden;
+ 
+    
+}
+li{
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+    text-align:center;
+  height:37px;
+    float:left;
+    border-right-color:wheat;
+    width: 126px;
+    border-right-style: groove;
+    border-right-color: inherit;
+    border-right-width: medium;
+}
+
+li.right{
+    float:right; 
+}
+
+
