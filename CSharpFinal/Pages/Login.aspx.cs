@@ -11,29 +11,65 @@ namespace CSharpFinal.Pages
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-
+           
         }
 
-        protected void Login1_Authenticate(object sender, AuthenticateEventArgs e)
+      
+
+       
+
+        protected void LoginButton_Click1(object sender, EventArgs e)
         {
+            string username = UsernameText.Text;
+            string password = PasswordText.Text;
 
-            int res = SQLdb.Login(Login1.UserName, Login1.Password);
-            if(res==1)
+            if (CheckBox1.Checked)
             {
-                e.Authenticated = true;
-
-                Context.Items["Username"] = Login1.UserName;
-
-                Server.Transfer("MainPage.aspx");
+                int res=SQLdb.TeacherLogin(username, password);
+                if(res==1)
+                {
+                    DateTime now = DateTime.Now;
+                    HttpCookie httpCookie = new HttpCookie("Teacher");
+                    httpCookie.Value = username;
+                    httpCookie.Expires = now.AddYears(50);
+                    Response.Cookies.Add(httpCookie);
+                    Response.Redirect("TeacherMain.aspx");
+                }
+                else
+                {
+                    Response.Write("<script> alert('Login Failed.') </script>");
+                }
             }
             else
             {
-                e.Authenticated = false;
 
+                int res = SQLdb.Login(username, password);
+                if (res == 1)
+                {
+                    DateTime now = DateTime.Now;
+                    HttpCookie httpCookie = new HttpCookie("Username");
+                    httpCookie.Value = username;
+                    httpCookie.Expires = now.AddYears(50);
+                    Response.Cookies.Add(httpCookie);
+
+                    Response.Redirect("MainPage.aspx");
+                }
+                else
+                {
+                    Response.Write("<script> alert('Login Failed.') </script>");
+
+                }
             }
+        }
 
+        protected void LinkButton3_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("Signup.aspx");
+        }
 
-         
+        protected void LinkButton2_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
