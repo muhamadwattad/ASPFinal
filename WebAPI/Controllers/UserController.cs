@@ -138,6 +138,7 @@ namespace WebAPI.Controllers
         {
 
             string[] arr = new string[] { "Sunday", "Monday", "Theusday", "Wendsday", "Thursday", "Friday" };
+
             string x = arr.SingleOrDefault(st => st.ToLower() == day.ToLower());
             if (x == null)
             {
