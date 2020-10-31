@@ -12,14 +12,18 @@ namespace FinalProjectAPI.Models
         public string venue_adress { get; set; }
         public string venue_city { get; set; }
         public int venue_capacity { get; set; }
+        public string venue_hebrew_name { get; set; }
+        public string venue_hebrew_city { get; set; }
 
-        public Stadium(string venue_name, string venue_surface, string venue_adress, string venue_city, int venue_capacity)
+        public Stadium(string venue_name, string venue_surface, string venue_adress, string venue_city, int venue_capacity,string venue_hebrew_name,string venue_hebrew_city )
         {
             this.venue_name = venue_name;
             this.venue_surface = venue_surface;
             this.venue_adress = venue_adress;
             this.venue_city = venue_city;
             this.venue_capacity = venue_capacity;
+            this.venue_hebrew_name = venue_hebrew_name;
+            this.venue_hebrew_city = venue_hebrew_city;
         }
 
         public Stadium()

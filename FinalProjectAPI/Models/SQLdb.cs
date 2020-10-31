@@ -64,7 +64,7 @@ namespace FinalProjectAPI.Models
                 SqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    list.Add(new User((string)reader["user_Email"], (string)reader["user_Password"], (string)reader["user_Name"], (string)reader["user_Image"], (string)reader["Location_Name"],(string)reader["User_Active"]));
+                    list.Add(new User((string)reader["user_Email"], (string)reader["user_Password"], (string)reader["user_Name"], (string)reader["user_Image"], (string)reader["Location_Name"], (string)reader["User_Active"]));
                 }
                 return list;
             }
@@ -116,18 +116,33 @@ namespace FinalProjectAPI.Models
 
         public static int putTeamsAndStadiums()
         {
+            //LIGAT HAAL
             var url = "https://api-football-v1.p.rapidapi.com/v2/teams/league/2708?";
-            //Getting teams from API
+            //LIGA LAUMIT
+            var url2 = "https://api-football-v1.p.rapidapi.com/v2/teams/league/2770?";
+            //Getting teams from API - LIGAT HALL
             HttpResponse<string> response = Unirest.get(url)
                .header("x-rapidapi-host", "api-football-v1.p.rapidapi.com")
                .header("x-rapidapi-key", "f9b1f6184amshd2535cf90bae600p1c7edfjsn7567501c9a89")
                .header("Accept", "application/json")
                .asJson<string>();
+            //Getting teams from API - LIGAT LAUMIT
+            HttpResponse<string> response2 = Unirest.get(url2)
+   .header("x-rapidapi-host", "api-football-v1.p.rapidapi.com")
+   .header("x-rapidapi-key", "f9b1f6184amshd2535cf90bae600p1c7edfjsn7567501c9a89")
+   .header("Accept", "application/json")
+   .asJson<string>();
+
+
             //turning the result to string
             string r = response.Body.ToString();
+            string r2 = response2.Body.ToString();
+
 
             List<Team> teams = null;
             List<Stadium> stadiums = null;
+
+            #region LigatHallTeams
             try
             {
                 //Getting The results as JSON
@@ -140,19 +155,43 @@ namespace FinalProjectAPI.Models
                 //adding teams and stadiums to lists
                 foreach (var i in jApi)
                 {
-                    teams.Add(new Team((int)i["team_id"], (string)i["name"], (string)i["logo"], (string)i["country"], (string)i["is_national"], (string)i["venue_name"]));
+                    teams.Add(new Team((int)i["team_id"], (string)i["name"], (string)i["logo"], (string)i["country"], (string)i["is_national"], (string)i["venue_name"],1));
 
-                    stadiums.Add(new Stadium((string)i["venue_name"], (string)i["venue_surface"], (string)i["venue_adress"], (string)i["venue_city"], (int)i["venue_capacity"]));
+                    stadiums.Add(new Stadium((string)i["venue_name"], (string)i["venue_surface"], (string)i["venue_adress"], (string)i["venue_city"], (int)i["venue_capacity"],"NULL","NULL"));
 
                 }
 
             }
             catch (Exception e) { return 0; }
-            //Checking Conditions
+            //Checking Conditions Of Team Count and Stadiums Count
             if (teams == null || teams.Count != 14 || stadiums.Count == 0 || stadiums == null)
             {
                 return 0;
             }
+            #endregion
+
+            #region LigaLaumitTeams
+            try
+            {
+                //Getting The results as JSON
+                JObject json = JObject.Parse(r2);
+                //Getting the reuslts as objects
+                JToken jApi = json["api"]["teams"];
+
+                //adding teams and stadiums to lists
+                foreach (var i in jApi)
+                {
+                    teams.Add(new Team((int)i["team_id"], (string)i["name"], (string)i["logo"], (string)i["country"], (string)i["is_national"], (string)i["venue_name"], 2));
+
+                    stadiums.Add(new Stadium((string)i["venue_name"], (string)i["venue_surface"], (string)i["venue_adress"], (string)i["venue_city"], (int)i["venue_capacity"],"NULL","NULL"));
+
+                }
+
+            }
+            catch (Exception e) { return 0; }
+
+            #endregion
+
             //Remove duplicated stadiums
             List<Stadium> newStadiums = stadiums.DistinctBy(st => st.venue_name).ToList();
 
@@ -202,6 +241,7 @@ namespace FinalProjectAPI.Models
                     command.Parameters.AddWithValue("@Team_country", i.country);
                     command.Parameters.AddWithValue("@Team_is_national", i.is_national);
                     command.Parameters.AddWithValue("@Team_venue_name", i.venue_name);
+                    command.Parameters.AddWithValue("@Team_league_code", i.team_league);
 
                     connection.Open();
                     int res = command.ExecuteNonQuery();
@@ -225,6 +265,7 @@ namespace FinalProjectAPI.Models
 
         public static int putGames()
         {
+
             var url = "https://api-football-v1.p.rapidapi.com/v2/fixtures/league/2708?timezone=asia/jerusalem";
             HttpResponse<string> response;
 
@@ -243,14 +284,20 @@ namespace FinalProjectAPI.Models
             {
                 return 0;
             }
-
             List<Game> games = null;
-            string r = response.Body.ToString();
-            if (r == null||r.Length==0)
-                return 0;
+            string r = null;
             try
             {
-
+              
+                //TURNING JSON TO STRING
+                r = response.Body.ToString();
+                if (r == null || r.Length == 0)
+                    return 0;
+            }
+            catch(Exception e) { return -1; }
+            try
+            {
+                //GETTING DATA AND SAVING THEM INTO LIST
                 JObject json = JObject.Parse(r);
                 JToken jApi = json["api"]["fixtures"];
                 games = new List<Game>();
@@ -258,7 +305,7 @@ namespace FinalProjectAPI.Models
                 {
                     JToken home = i["homeTeam"];
                     JToken away = i["awayTeam"];
-                    games.Add(new Game((int)i["fixture_id"], (string)i["event_date"], (int)i["event_timestamp"], (string)i["round"], (string)i["status"], (string)i["statusShort"], (string)i["venue"], (int)home["team_id"], (int)away["team_id"],(string)i["goalsHomeTeam"]??"-",(string)i["goalsAwayTeam"]??"-"));
+                    games.Add(new Game((int)i["fixture_id"], (string)i["event_date"], (int)i["event_timestamp"], (string)i["round"], (string)i["status"], (string)i["statusShort"], (string)i["venue"], (int)home["team_id"], (int)away["team_id"], (string)i["goalsHomeTeam"] ?? "-", (string)i["goalsAwayTeam"] ?? "-"));
 
                 }
 
@@ -270,7 +317,7 @@ namespace FinalProjectAPI.Models
             {
                 //Removing outdated games to replace them with updated ones
                 TurnConn();
-                command = new SqlCommand("delete from Games", connection);
+                command = new SqlCommand("delete from GamesScore delete from Games", connection);
                 connection.Open();
                 command.ExecuteNonQuery();
                 connection.Close();
@@ -315,6 +362,7 @@ namespace FinalProjectAPI.Models
 
         public static List<Game> GetGames()
         {
+            //GETTING GAMES FROM DATABASE AND SAVING THEM INTO LIST
             List<Game> games = new List<Game>();
             try
             {
@@ -324,7 +372,7 @@ namespace FinalProjectAPI.Models
                 SqlDataReader i = command.ExecuteReader();
                 while (i.Read())
                 {
-                    games.Add(new Game((int)i["Fixture_id"], (string)i["Fixture_date"], (int)i["Fixture_timestamp"], (string)i["Fixture_round"], (string)i["Fixture_status"], (string)i["Fixture_statusShort"], (string)i["Fixture_venue"], (int)i["Fixture_homeTeamcode"], (int)i["Fixture_awayTeamcode"],(string)i["homeScore"],(string)i["awayScore"]));
+                    games.Add(new Game((int)i["Fixture_id"], (string)i["Fixture_date"], (int)i["Fixture_timestamp"], (string)i["Fixture_round"], (string)i["Fixture_status"], (string)i["Fixture_statusShort"], (string)i["Fixture_venue"], (int)i["Fixture_homeTeamcode"], (int)i["Fixture_awayTeamcode"], (string)i["homeScore"], (string)i["awayScore"]));
                 }
             }
             catch (Exception e) { return null; }
@@ -336,6 +384,7 @@ namespace FinalProjectAPI.Models
         }
         public static List<Team> GetTeams()
         {
+            //GETTING TEAMS FROM DATABASE AND SAVING THEM INTO LIST
             List<Team> teams = new List<Team>();
             command = new SqlCommand("getTeams", connection);
             command.CommandType = CommandType.StoredProcedure;
@@ -345,17 +394,17 @@ namespace FinalProjectAPI.Models
                 SqlDataReader i = command.ExecuteReader();
                 while (i.Read())
                 {
-                    teams.Add(new Team((int)i["Team_ID"], (string)i["Team_name"], (string)i["Team_logo"], (string)i["Team_country"], (string)i["Team_is_national"], (string)i["Team_venue_name"]));
+                    teams.Add(new Team((int)i["Team_ID"], (string)i["Team_name"], (string)i["Team_logo"], (string)i["Team_country"], (string)i["Team_is_national"], (string)i["Team_venue_name"],(int)i["Team_League_Code"]));
                 }
                 connection.Close();
                 return teams;
             }
-            catch(Exception e) { return null; }
+            catch (Exception e) { return null; }
             finally
             {
                 TurnConn();
             }
-            
+
         }
 
         public static void RemoveTeamsAndStadiumsAndGames()
@@ -369,13 +418,15 @@ namespace FinalProjectAPI.Models
             connection.Open();
             command.ExecuteNonQuery();
             connection.Close();
-            command = new SqlCommand("delete from Games", connection);
+            command = new SqlCommand("delete from GamesScore delete from games", connection);
             connection.Open();
             command.ExecuteNonQuery();
             connection.Close();
         }
+
         public static List<Team> getFavoriteTeam(string email)
         {
+            //GETTNG USER FAVORITE TEAMS FROM DATABASE BY USER EMAIL
             command = new SqlCommand("GetFavoriteTeam", connection);
             command.CommandType = CommandType.StoredProcedure;
             command.Parameters.AddWithValue("@email", email);
@@ -384,21 +435,22 @@ namespace FinalProjectAPI.Models
             {
 
                 connection.Open();
-                SqlDataReader i=command.ExecuteReader();
+                SqlDataReader i = command.ExecuteReader();
                 while (i.Read())
                 {
-                    teams.Add(new Team((int)i["Team_ID"], (string)i["Team_name"],(string)i["Team_logo"],(string)i["Team_country"],(string)i["Team_is_national"],(string)i["Team_venue_name"]));
+                    teams.Add(new Team((int)i["Team_ID"], (string)i["Team_name"], (string)i["Team_logo"], (string)i["Team_country"], (string)i["Team_is_national"], (string)i["Team_venue_name"],(int)i["Team_League_Code"]));
                 }
                 return teams;
             }
-            catch(Exception e) { return null; }
+            catch (Exception e) { return null; }
             finally
             {
                 TurnConn();
             }
         }
-        public static int UpdateActiveStatus(string status,string email)
+        public static int UpdateActiveStatus(string status, string email)
         {
+            //UPDATING IF USER IS ONLINE OR NOT (TRUE OR FALSE)
             command = new SqlCommand("UpdateActiveStatus", connection);
             command.CommandType = CommandType.StoredProcedure;
             command.Parameters.AddWithValue("@email", email);
@@ -406,15 +458,41 @@ namespace FinalProjectAPI.Models
             try
             {
                 connection.Open();
-                int res=command.ExecuteNonQuery();
+                int res = command.ExecuteNonQuery();
                 return res;
             }
-            catch(Exception e) { return 0; }
+            catch (Exception e) { return 0; }
             finally
             {
                 TurnConn();
             }
         }
 
+        public static List<Stadium> getStadiums()
+        {
+            List<Stadium> stadiums = new List<Stadium>();
+            command = new SqlCommand("GetStadiums", connection);
+            command.CommandType = CommandType.StoredProcedure;
+            try
+            {
+                //GETTING STADIUMS FROM DATABASE AND SAVING THEM INTO LIST
+                connection.Open();
+                SqlDataReader i = command.ExecuteReader();
+                while (i.Read())
+                {
+                    stadiums.Add(new Stadium((string)i["Venue_name"], (string)i["Venue_surface"], (string)i["Venue_adress"], (string)i["Venue_city"], (int)i["Venue_capacity"],(string)i["Venue_hebrew_name"],(string)i["Venue_hebrew_city"]));
+                }
+                connection.Close();
+                return stadiums;
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+            finally
+            {
+                TurnConn();
+            }
+        }
     }
 }
